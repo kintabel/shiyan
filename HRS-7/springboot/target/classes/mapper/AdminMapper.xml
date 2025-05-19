@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.AdminMapper">
+
+    <sql id="Base_Column_List">
+        id,username,password,name,phone,email,avatar,role
+    </sql>
+
+    <select id="selectAll" resultType="com.example.entity.Admin">
+        select
+        <include refid="Base_Column_List" />
+        from `cq-hospital`.user
+        <where>
+            <if test="id != null"> and id= #{id}</if>
+            <if test="username != null"> and username like concat('%', #{username}, '%')</if>
+            <if test="password != null"> and password= #{password}</if>
+            <if test="name != null"> and name= #{name}</if>
+            <if test="phone != null"> and phone= #{phone}</if>
+            <if test="email != null"> and email= #{email}</if>
+            <if test="avatar != null"> and avatar= #{avatar}</if>
+            <if test="role != null"> and role= #{role}</if>
+        </where>
+    </select>
+
+    <select id="selectById" resultType="com.example.entity.Admin">
+        select
+        <include refid="Base_Column_List" />
+        from `cq-hospital`.admin
+        where id = #{id}
+    </select>
+
+    <select id="selectReceivedPatientCount" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM `cq-hospital`.register
+        WHERE doctor_id = #{doctorId}
+          AND (
+            STR_TO_DATE(
+                    SUBSTRING_INDEX(register_time, ' ', 1),
+                    '%Y-%m-%d'
+                ) BETWEEN
+                STR_TO_DATE(CONCAT(#{yearMonth}, '-01'), '%Y-%m-%d')
+                AND LAST_DAY(STR_TO_DATE(CONCAT(#{yearMonth}, '-01'), '%Y-%m-%d'))
+            )
+    </select>
+
+    <select id="selectLeaveApplicationCount" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM `cq-hospital`.leave_application
+        WHERE doctor_id = #{doctorId}
+          AND approval_status = 1
+          AND (
+            STR_TO_DATE(
+                    SUBSTRING_INDEX(leave_date, ' ', 1),
+                    '%Y-%m-%d'
+                ) BETWEEN
+                STR_TO_DATE(CONCAT(#{yearMonth}, '-01'), '%Y-%m-%d')
+                AND LAST_DAY(STR_TO_DATE(CONCAT(#{yearMonth}, '-01'), '%Y-%m-%d'))
+            )
+    </select>
+
+    <select id="selectAllDoctorId" resultType="java.lang.Integer">
+        SELECT doctor.id FROM `cq-hospital`.doctor join `cq-hospital`.hospital on doctor.hospital_id = hospital.id
+        join `cq-hospital`.admin on admin.hospital_id = hospital.id
+        where admin.id = #{adminId}
+    </select>
+
+    <select id="selectRegister" resultType="com.example.entity.RegistrationDetail">
+        SELECT
+            r.`order`,
+            h.`name` AS hospitalName,
+            dpt.`name` AS departmentName,
+            doc.`name` AS doctorName,
+            r.order_time,
+            r.register_time,
+            r.price,
+            u.`name` AS userName,
+            u.phone AS userPhone,
+            u.gender AS userGender,
+            r.status
+        FROM
+            `cq-hospital`.register r
+                JOIN
+            `cq-hospital`.hospital h ON r.hospital_id = h.id
+                JOIN
+            `cq-hospital`.department dpt ON r.department_id = dpt.id
+                JOIN
+            `cq-hospital`.doctor doc ON r.doctor_id = doc.id
+                JOIN
+            `cq-hospital`.user u ON r.user_id = u.id
+                JOIN
+            `cq-hospital`.admin a on h.id = a.hospital_id
+        WHERE
+            a.id= #{adminId}
+    </select>
+    <select id="selectAllOperationLog" resultType="com.example.entity.OperationLog">
+        SELECT * FROM `cq-hospital`.operationlog
+        WHERE 1=1
+        <if test="module != null and module != ''">
+            AND module LIKE CONCAT('%', #{module}, '%')
+        </if>
+        <if test="userName != null and userName != ''">
+            AND user_name LIKE CONCAT('%', #{userName}, '%')
+        </if>
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="selectRating" resultType="java.lang.Double">
+        SELECT
+            AVG(evaluated_object_type) from `cq-hospital`.evaluation
+        join `cq-hospital`.doctor on evaluation.doctor_id = doctor.id
+        join `cq-hospital`.hospital on doctor.hospital_id = hospital.id
+        where hospital.id = #{hospitalId}
+    </select>
+
+    <select id="selectDepartmentRating" resultType="java.lang.Double">
+        select avg(evaluated_object_type) from `cq-hospital`.evaluation
+        join `cq-hospital`.doctor on evaluation.doctor_id = doctor.id
+        where doctor.department_id = #{id}
+    </select>
+
+    <delete id="deleteById">
+        delete from `cq-hospital`.user
+        where  id = #{id}
+    </delete>
+
+    <insert id="insert" parameterType="com.example.entity.Admin" useGeneratedKeys="true">
+        insert into `cq-hospital`.user
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+                <if test="id != null">id,</if>
+                <if test="username != null">username,</if>
+                <if test="password != null">password,</if>
+                <if test="name != null">name,</if>
+                <if test="phone != null">phone,</if>
+                <if test="email != null">email,</if>
+                <if test="avatar != null">avatar,</if>
+                <if test="role != null">role,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+                <if test="id != null">#{id},</if>
+                <if test="username != null">#{username},</if>
+                <if test="password != null">#{password},</if>
+                <if test="name != null">#{name},</if>
+                <if test="phone != null">#{phone},</if>
+                <if test="email != null">#{email},</if>
+                <if test="avatar != null">#{avatar},</if>
+                <if test="role != null">#{role},</if>
+        </trim>
+    </insert>
+    <insert id="InsertWorkloadStatistics" >
+        insert into `cq-hospital`.workload_statistics (doctor_id, `year_month`, received_patient_count, leave_count) values (#{doctorId}, #{yearMonth}, #{receivedPatientCount}, #{leaveApplicationCount})
+    </insert>
+    <insert id="calculatePerformance">
+        INSERT INTO `cq-hospital`.performance (doctor_id, `year_month`, performance)
+        SELECT
+            d.id AS doctor_id,
+            ws.year_month,
+            1.0 +
+                -- 问诊数大于60加0.3
+            CASE WHEN ws.received_patient_count > 60 THEN 0.3 ELSE 0 END +
+                -- 申诉次数大于3每次减0.05
+            -0.05 * GREATEST(d.appealed_number - 3, 0) +
+                -- 请假天数处理
+            CASE
+                WHEN ws.leave_count = 0 THEN 0.2
+                WHEN ws.leave_count > 3 THEN -0.05 * (ws.leave_count - 3)
+                ELSE 0
+                END AS performance
+        FROM
+            `cq-hospital`.doctor d
+                JOIN
+            `cq-hospital`.workload_statistics ws ON d.id = ws.doctor_id
+        WHERE
+            ws.year_month = #{yearMonth}  -- 这里替换为传入的年月参数
+          AND d.id = #{doctorId};           -- 这里替换为传入的doctor_id参数
+    </insert>
+
+    <update id="updateById" parameterType="com.example.entity.Admin">
+        update `cq-hospital`.user
+        <set>
+            <if test="username != null">
+                username = #{username},
+            </if>
+            <if test="password != null">
+                password = #{password},
+            </if>
+            <if test="name != null">
+                name = #{name},
+            </if>
+            <if test="phone != null">
+                phone = #{phone},
+            </if>
+            <if test="email != null">
+                email = #{email},
+            </if>
+            <if test="avatar != null">
+                avatar = #{avatar},
+            </if>
+            <if test="role != null">
+                role = #{role},
+            </if>
+        </set>
+        where id = #{id} 
+    </update>
+
+</mapper>

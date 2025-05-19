@@ -1,0 +1,121 @@
+.admin-dashboard {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background-color: #e4e7ed; /* 浅灰色背景，比原来稍深 */
+}
+
+/* 顶部横幅 */
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    height: 60px;
+    background-color: #333333; /* 深灰色背景 */
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+}
+
+.admin-header-left {
+    display: flex;
+    align-items: center;
+}
+
+.logo {
+    width: 40px;
+    height: 40px;
+    margin-right: 10px;
+}
+
+.title {
+    font-size: 20px;
+    font-weight: bold;
+    color: #6a9ac4; /* 蓝色，比原来稍深 */
+}
+
+.admin-header-right {
+    display: flex;
+    align-items: center;
+}
+
+.admin-info {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.admin-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.admin-name {
+    font-size: 14px;
+    color: #d9d9d9; /* 浅灰色文字 */
+}
+
+.el-icon-arrow-down {
+    margin-left: 5px;
+    color: #b3b3b3; /* 灰色箭头 */
+}
+
+/* 导航栏 */
+.admin-nav {
+    background-color: #444444; /* 深灰色背景 */
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+}
+
+.el-menu {
+    padding: 0 20px;
+}
+
+.el-menu-item {
+    font-size: 14px;
+    color: #d9d9d9; /* 浅灰色文字 */
+    transition: background-color 0.3s ease;
+}
+
+.el-menu-item:hover {
+    background-color: #555555; /* 更深的灰色背景 */
+    color: #6a9ac4; /* 蓝色文字 */
+}
+
+.el-menu-item.is-active {
+    color: #6a9ac4; /* 蓝色文字 */
+    border-bottom: 2px solid #6a9ac4; /* 蓝色下划线 */
+}
+
+/* 主体内容 */
+.doctor-main {
+    flex: 1;
+    padding: 20px;
+    background-color: #333333; /* 深灰色背景 */
+    margin: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* 下拉菜单 */
+.el-dropdown-menu {
+    padding: 10px 0;
+}
+
+.el-dropdown-menu__item {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    color: #d9d9d9; /* 浅灰色文字 */
+    padding: 10px 20px;
+}
+
+.el-dropdown-menu__item i {
+    margin-right: 10px;
+}
+
+.el-dropdown-menu__item:hover {
+    background-color: #555555; /* 更深的灰色背景 */
+    color: #6a9ac4; /* 蓝色文字 */
+}

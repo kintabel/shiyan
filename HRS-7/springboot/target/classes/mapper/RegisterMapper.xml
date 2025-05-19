@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.RegisterMapper">
+
+    <sql id="Base_Column_List">
+        id, hospital_id, department_id, doctor_id, user_id,time
+    </sql>
+    <update id="handleAppeal">
+        UPDATE `cq-hospital`.appeal JOIN `cq-hospital`.register ON appeal.register_order= register.order
+        JOIN `cq-hospital`.doctor ON register.doctor_id = doctor.id
+        SET doctor.appealed_number = doctor.appealed_number + 1, appeal.status = 1
+        WHERE appeal.appeal_order = #{appealOrder}
+    </update>
+    <select id="selectOrderDetail" resultType="com.example.entity.RegistrationDetail">
+        SELECT
+            r.`order`,
+            h.`name` AS hospitalName,
+            dpt.`name` AS departmentName,
+            doc.`name` AS doctorName,
+            r.order_time,
+            r.register_time,
+            r.shift_type,
+            r.price,
+            u.`name` AS userName,
+            u.phone AS userPhone,
+            u.gender AS userGender,
+            r.status
+        FROM
+            `cq-hospital`.register r
+                JOIN
+            `cq-hospital`.hospital h ON r.hospital_id = h.id
+                JOIN
+            `cq-hospital`.department dpt ON r.department_id = dpt.id
+                JOIN
+            `cq-hospital`.doctor doc ON r.doctor_id = doc.id
+                JOIN
+            `cq-hospital`.user u ON r.user_id = u.id
+        WHERE
+            r.`order` = #{order};
+    </select>
+    <select id="patientAppealPage" resultType="com.example.DTO.PatientAppealDTO">
+        SELECT
+            a.appeal_order,
+            u.`name` AS patientName,
+            u.phone AS patientPhone,
+            u.gender AS patientGender,
+            h.`name` AS hospital,
+            dpt.`name` AS department,
+            doc.`name` AS doctor,
+            f.file,
+            a.content AS appealContent,
+            a.date AS appealTime,
+            a.status
+            FROM
+                `cq-hospital`.appeal a
+            JOIN
+                `cq-hospital`.register r ON a.register_order = r.`order`
+            JOIN
+                `cq-hospital`.user u ON r.user_id = u.id
+            JOIN
+                `cq-hospital`.hospital h ON r.hospital_id = h.id
+            JOIN
+                `cq-hospital`.department dpt ON r.department_id = dpt.id
+            JOIN
+                `cq-hospital`.doctor doc ON r.doctor_id = doc.id
+        JOIN `cq-hospital`.files f ON a.file_id = f.id
+            JOIN `cq-hospital`.admin adm ON adm.hospital_id = h.id
+        WHERE
+            adm.id = #{userId} AND a.status = 0
+    </select>
+    <select id="selectByAppealOrder" resultType="com.example.DTO.PatientAppealDTO">
+        SELECT
+            a.appeal_order,
+            u.`name` AS patientName,
+            u.phone AS patientPhone,
+            u.gender AS patientGender,
+            h.`name` AS hospital,
+            dpt.`name` AS department,
+            doc.`name` AS doctor,
+            f.name AS file,
+            a.content AS appealContent,
+            a.date AS appealTime,
+            a.status,
+            f.file AS filePath
+        FROM
+            `cq-hospital`.appeal a
+                JOIN
+            `cq-hospital`.register r ON a.register_order = r.`order`
+                JOIN
+            `cq-hospital`.user u ON r.user_id = u.id
+                JOIN
+            `cq-hospital`.hospital h ON r.hospital_id = h.id
+                JOIN
+            `cq-hospital`.department dpt ON r.department_id = dpt.id
+                JOIN
+            `cq-hospital`.doctor doc ON r.doctor_id = doc.id
+                JOIN `cq-hospital`.files f ON a.file_id = f.id
+                JOIN `cq-hospital`.admin adm ON adm.hospital_id = h.id
+        WHERE
+            a.appeal_order = #{appealOrder}
+    </select>
+
+
+</mapper>

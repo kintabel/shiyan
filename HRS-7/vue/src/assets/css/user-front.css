@@ -1,0 +1,111 @@
+/* 整体容器样式 */
+.hospital-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    /* 当内容超出视口高度时，允许滚动 */
+    overflow-y: auto;
+}
+
+/* 顶部横幅样式 */
+.hospital-header {
+    display: flex;
+    align-items: center;
+    padding: 10px 20px; /* 减少上下内边距，让顶部导航栏变窄 */
+    background-color: #87CEEB; /* 深绿色背景 */
+    color: white;
+}
+
+.hospital-header-left {
+    display: flex;
+    align-items: center;
+}
+
+.hospital-header-left img {
+    width: 50px;
+    height: 50px;
+    margin-right: 10px;
+}
+
+.title {
+    font-size: 24px;
+}
+
+/* 导航栏样式 */
+.hospital-nav {
+    background-color: white; /* 白色背景 */
+    border-bottom: 1px solid #87CEEB; /* 深绿色底部边框 */
+    padding: 5px 0; /* 减少上下内边距，让导航栏变窄 */
+}
+
+.el-menu--horizontal {
+    background-color: white; /* 白色菜单背景 */
+}
+
+/* 导航栏菜单项和子菜单标题样式 */
+.el-menu--horizontal .el-menu-item,
+.el-menu--horizontal .el-submenu__title{
+    font-family: '楷体', serif; /* 楷体字体 */
+}
+
+/* 子菜单中的菜单项样式 */
+.el-menu--horizontal .el-submenu .el-menu-item {
+    font-family: '楷体', serif; /* 楷体字体 */
+}
+
+/* 激活状态的菜单项和子菜单标题样式 */
+.el-menu--horizontal .el-menu-item.is-active,
+.el-menu--horizontal .el-submenu.is-active .el-submenu__title {
+    color: white;
+    background-color: #87CEEB; /* 激活状态深绿色背景 */
+    font-family: '楷体', serif; /* 楷体字体 */
+}
+
+/* 激活状态下子菜单中的菜单项样式 */
+.el-menu--horizontal .el-submenu.is-active .el-menu-item.is-active {
+    color: white;
+    background-color: #87CEEB; /* 激活状态深绿色背景 */
+    font-family: '楷体', serif; /* 楷体字体 */
+}
+
+/* 主体内容样式 */
+.hospital-main {
+    display: flex;
+    flex: 1;
+}
+
+.hospital-main-left {
+    width: 200px;
+    background-color: white; /* 白色背景 */
+    padding: 20px;
+    border-right: 1px solid #87CEEB; /* 深绿色右边框 */
+}
+
+.hospital-main-right {
+    flex: 1;
+    padding: 20px;
+    background-color: white; /* 白色背景 */
+}
+
+
+.hospital-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* 使左右部分分别靠两侧 */
+    padding: 10px 20px;
+    background-color: #87CEEB;
+    color: white;
+}
+
+.hospital-header-right {
+    display: flex;
+    align-items: center;
+}
+
+.user-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    margin-left: 10px;
+}

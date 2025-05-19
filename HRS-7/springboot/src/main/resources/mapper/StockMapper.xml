@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.StockMapper">
+
+    <sql id="Base_Column_List">
+
+    </sql>
+    <insert id="purchase">
+INSERT INTO `cq-hospital`.purchase_report (name, quantity, supplier_address, supplier_leader, supplier_name, supplier_phone, supplier_price, date, total_price) VALUES (#{name}, #{quantity}, #{supplierAddress}, #{supplierLeader}, #{supplierName}, #{supplierPhone}, #{supplierPrice}, #{date}, #{totalPrice})
+    </insert>
+    <insert id="insert" parameterType="com.example.entity.Stock">
+    </insert>
+    <update id="inserStock">
+        update `cq-hospital`.`stock`
+        join `cq-hospital`.admin ad on ad.hospital_id = stock.hospital_id
+        join `cq-hospital`.department d on d.id = stock.department_id
+        set stock = stock + #{quantity}
+        where stock.name = #{name} and ad.id = #{hospitalAdminId} and d.name = #{department}
+    </update>
+    <select id="selectByDocId" resultType="com.example.entity.Stock">
+        SELECT s.id,
+               s.hospital_id,
+               s.department_id,
+               s.stock,
+               s.`name`,
+               s.price,
+               s.manufacturer,
+               s.sell_by,
+               s.type,
+               s.status
+        FROM `cq-hospital`.`stock` s
+                 JOIN `cq-hospital`.hospital h ON s.hospital_id = h.id
+                 JOIN `cq-hospital`.department dpt ON s.department_id = dpt.id
+                 JOIN `cq-hospital`.doctor doc ON doc.hospital_id = h.id
+                 JOIN `cq-hospital`.user u ON doc.user_id = u.id
+        WHERE doc.user_id = #{doctorId}
+    </select>
+    <select id="selectStockByType" resultType="com.example.DTO.StockDTO">
+        SELECT s.id,
+               s.name,
+               s.stock,
+               dpt.name AS department,
+               s.manufacturer,
+               s.sell_by,
+               s.price,
+               s.status
+        FROM `cq-hospital`.`stock` s
+                 JOIN `cq-hospital`.department dpt ON s.department_id = dpt.id
+                 JOIN `cq-hospital`.hospital h ON h.id = s.hospital_id
+                 JOIN `cq-hospital`.admin ad ON ad.hospital_id = h.id
+        WHERE s.type = #{type}
+          AND ad.id = #{hospitalAdminId}
+    </select>
+    <select id="selectSupplier" resultType="com.example.entity.Supplier">
+        SELECT su.name,
+               ss.price,
+               su.address,
+               su.phone,
+               su.leader
+        FROM `cq-hospital`.stock s
+                 JOIN `cq-hospital`.supply_stock ss ON ss.med_name = s.name
+                 JOIN `cq-hospital`.supplier su ON su.id = ss.supplier
+        WHERE s.name = #{name}
+    </select>
+    <select id="selectResource" resultType="com.example.DTO.ResourceDTO">
+        SELECT
+            stock.name,
+            stock,
+            DATEDIFF(STR_TO_DATE(sell_by, '%Y-%m-%d'), CURDATE()) AS time,
+            status
+        FROM
+            `cq-hospital`.stock
+        join `cq-hospital`.admin a on stock.hospital_id = a.hospital_id
+        WHERE
+            a.id = #{hospitalAdminId}
+          AND department_id = #{departmentId}
+        AND type = #{type}
+        ORDER BY
+            time ASC;  -- 按距离过期天数升序排列
+    </select>
+
+
+</mapper>

@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.UserMapper">
+
+    <sql id="Base_Column_List">
+        id,username,password,name,phone,email,avatar,role,gender
+    </sql>
+
+    <select id="selectAll" resultType="com.example.entity.User">
+        select
+        <include refid="Base_Column_List" />
+        from `cq-hospital`.user
+        <where>
+            <if test="id != null"> and id= #{id}</if>
+            <if test="username != null"> and username like concat('%', #{username}, '%')</if>
+            <if test="password != null"> and password= #{password}</if>
+            <if test="name != null"> and name= #{name}</if>
+            <if test="phone != null"> and phone= #{phone}</if>
+            <if test="email != null"> and email= #{email}</if>
+            <if test="avatar != null"> and avatar= #{avatar}</if>
+            <if test="role != null"> and role= #{role}</if>
+        </where>
+    </select>
+
+    <select id="selectById" resultType="com.example.entity.User">
+        select
+        <include refid="Base_Column_List" />
+        from `cq-hospital`.user
+        where id = #{id}
+    </select>
+    <select id="selectRegistrations" resultType="com.example.entity.RegistrationDetail">
+        SELECT
+            r.`order`,
+            h.`name` AS hospitalName,
+            dpt.`name` AS departmentName,
+            doc.`name` AS doctorName,
+            r.order_time,
+            r.register_time,
+            r.price,
+            u.`name` AS userName,
+            u.phone AS userPhone,
+            u.gender AS userGender,
+            r.status
+        FROM
+            `cq-hospital`.register r
+                JOIN
+            `cq-hospital`.hospital h ON r.hospital_id = h.id
+                JOIN
+            `cq-hospital`.department dpt ON r.department_id = dpt.id
+                JOIN
+            `cq-hospital`.doctor doc ON r.doctor_id = doc.id
+                JOIN
+            `cq-hospital`.user u ON r.user_id = u.id
+        WHERE
+            u.id = #{id}
+    </select>
+
+    <!--查找住院记录-->
+    <select id="selectHospitalizationById" resultType="com.example.entity.Hospitalization">
+        select
+            hospitalization.id,
+            u.name as userName,
+            doc.name as doctorName,
+            d.name as departmentName,
+            h.name as hospitalName
+        from `cq-hospital`.hospitalization
+                 join `cq-hospital`.department d on d.id = hospitalization.department_id
+                 join `cq-hospital`.doctor doc on doc.id = hospitalization.doctor_id
+                 join `cq-hospital`.user u on u.id = hospitalization.user_id
+                 join `cq-hospital`.hospital h on h.id = hospitalization.hospital_id
+        where `cq-hospital`.hospitalization.user_id = #{id}
+    </select>
+
+    <!--查找住院信息-->
+    <select id="selectHospitalizationInformationById"
+            resultType="com.example.entity.HospitalizationInformation">
+        SELECT
+            u.name AS userName,
+            doc.name AS doctorName,
+            d.name AS departmentName,
+            h.name AS hospitalName,
+            information.admission_time,
+            information.total_cost,
+            IF(information.discharge_time IS NULL, '暂未离院', information.discharge_time) AS discharge_time,
+            IF(information.disease IS NULL, '暂无诊断', information.disease) AS disease,
+            IF(information.discharge_orders IS NULL, '暂无医嘱', information.discharge_orders) AS discharge_orders,
+            IF(information.in_report_id IS NULL, '无入院报告', information.in_report_id) AS in_report_id,
+            IF(information.out_report_id IS NULL, 0, information.out_report_id) AS out_report_id,
+            IF(information.surgery IS NULL, '无手术记录', information.surgery) AS surgery,
+            IF(information.cost_id IS NULL, 0, information.cost_id) AS costId
+        FROM `cq-hospital`.information
+                 JOIN `cq-hospital`.hospitalization hl ON hl.information_id = information.id
+                 JOIN `cq-hospital`.department d ON d.id = hl.department_id
+                 JOIN `cq-hospital`.doctor doc ON doc.id = hl.doctor_id
+                 JOIN `cq-hospital`.user u ON u.id = hl.user_id
+                 JOIN `cq-hospital`.hospital h ON h.id = hl.hospital_id
+        WHERE hl.id = #{hospitalizationId}
+    </select>
+
+    <!--查询报告-->
+    <select id="selectReportById" resultType="com.example.entity.Report">
+        select
+            u.name as userName,
+            doc.name as doctorName,
+            d.name as departmentName,
+            h.name as hospitalName,
+            report.patient_age,
+            report.patient_gender,
+            report.patient_weight,
+            report.patient_height,
+            report.blood_pressure,
+            report.heart_rate,
+            report.complete_blood_count,
+            report.urinalysis,
+            report.report_type,
+            report.contagious_disease
+            from `cq-hospital`.report
+        join `cq-hospital`.information i on i. id= report.information_id
+        join `cq-hospital`.hospitalization hl on hl.information_id = i.id
+        join `cq-hospital`.department d on d.id = hl.department_id
+        join `cq-hospital`.doctor doc on doc.id = hl.doctor_id
+        join `cq-hospital`.user u on u.id = hl.user_id
+        join `cq-hospital`.hospital h on h.id = hl.hospital_id
+        where report.id = #{reportId}
+    </select>
+    <select id="selectWaitingQueues" resultType="com.example.DTO.WaitingQueuesDTO">
+        SELECT
+        r.id,
+        r.order AS orderNumber,
+        CONCAT(SUBSTRING(u.name, 1, 1), '**') AS nameHidden,
+        r.register_time AS registerTime,
+        ROW_NUMBER() OVER (ORDER BY r.register_time, r.order_time) AS queueNumber
+        FROM
+        `cq-hospital`.register r
+        JOIN
+        `cq-hospital`.user u ON r.user_id = u.id
+        JOIN
+        `cq-hospital`.doctor d ON r.doctor_id = d.id
+        WHERE
+        r.doctor_id = #{doctorId}
+        AND r.register_time LIKE CONCAT(#{today}, '%')
+        AND r.register_time  &lt;= #{registerTime}
+        AND r.status = 0
+        AND d.id = 1
+        ORDER BY
+        r.register_time;
+    </select>
+    <select id="selectEvaluationsByDoctorId" resultType="com.example.DTO.EvaluationDTO">
+        select * from `cq-hospital`.evaluation where doctor_id = #{doctorId}
+    </select>
+
+    <select id="selectAverageEvaluationByDoctorId" resultType="java.lang.Double">
+        select avg(score) from `cq-hospital`.evaluation where doctor_id = #{doctorId}
+    </select>
+
+
+    <delete id="deleteById">
+        delete from `cq-hospital`.user
+        where  id = #{id}
+    </delete>
+
+    <insert id="insert" parameterType="com.example.entity.User" useGeneratedKeys="true">
+        insert into `cq-hospital`.user
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+                <if test="id != null">id,</if>
+                <if test="username != null">username,</if>
+                <if test="password != null">password,</if>
+                <if test="name != null">name,</if>
+                <if test="phone != null">phone,</if>
+                <if test="email != null">email,</if>
+                <if test="avatar != null">avatar,</if>
+                <if test="role != null">role,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+                <if test="id != null">#{id},</if>
+                <if test="username != null">#{username},</if>
+                <if test="password != null">#{password},</if>
+                <if test="name != null">#{name},</if>
+                <if test="phone != null">#{phone},</if>
+                <if test="email != null">#{email},</if>
+                <if test="avatar != null">#{avatar},</if>
+                <if test="role != null">#{role},</if>
+        </trim>
+    </insert>
+    <insert id="insertEvaluation">
+        INSERT INTO `cq-hospital`.evaluation (
+            user_id,
+            evaluated_object_type,
+            doctor_id,
+            evaluation_content,
+            evaluation_time
+        )
+        SELECT
+            r.user_id,
+            #{evaluationType} AS evaluated_object_type,
+            r.doctor_id,
+            #{evaluationContent} AS evaluation_content,
+            #{evaluationDate} AS evaluation_time
+        FROM
+            `cq-hospital`.register r
+        WHERE
+            r.order = #{registerOrder}
+          AND r.user_id IS NOT NULL
+          AND r.doctor_id IS NOT NULL;
+    </insert>
+
+    <update id="updateById" parameterType="com.example.entity.User">
+        update `cq-hospital`.user
+        <set>
+            <if test="username != null">
+                username = #{username},
+            </if>
+            <if test="password != null">
+                password = #{password},
+            </if>
+            <if test="name != null">
+                name = #{name},
+            </if>
+            <if test="phone != null">
+                phone = #{phone},
+            </if>
+            <if test="email != null">
+                email = #{email},
+            </if>
+            <if test="avatar != null">
+                avatar = #{avatar},
+            </if>
+            <if test="role != null">
+                role = #{role},
+            </if>
+        </set>
+        where id = #{id} 
+    </update>
+
+</mapper>

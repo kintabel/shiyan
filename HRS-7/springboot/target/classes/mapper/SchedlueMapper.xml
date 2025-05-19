@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.ScheduleMapper">
+    <delete id="deleteScheduleByLeave">
+        DELETE s
+        FROM `cq-hospital`.schedule s
+                 JOIN `cq-hospital`.leave_application la1 ON s.schedule_date = la1.leave_date
+                 JOIN `cq-hospital`.leave_application la2 ON s.doctor_id = la2.doctor_id
+        WHERE la1.id = #{id}
+    </delete>
+
+
+    <select id="getScheduleByDoctorName" resultType="com.example.entity.Schedule">
+        select * from `cq-hospital`.schedule join `cq-hospital`.doctor on schedule.doctor_id = doctor.id
+                 join `cq-hospital`.hospital on schedule.hospital_id = hospital.id
+                 join `cq-hospital`.department on schedule.department_id = department.id
+                where doctor.name = #{doctorName} and schedule.schedule_date = #{scheduleDate} and hospital.name = #{hospitalName} and department.name = #{departmentName}
+    </select>
+    <select id="getLeaveApplicationsByDoctorId" resultType="com.example.entity.LeaveApplication">
+        select *
+            from `cq-hospital`.leave_application
+                 join `cq-hospital`.admin on admin.hospital_id = leave_application.hospital_id
+                 join `cq-hospital`.hospital on admin.hospital_id = hospital.id
+                 join `cq-hospital`.doctor on leave_application.doctor_id = doctor.id
+                 join `cq-hospital`.department on doctor.department_id = department.id
+            where leave_application.department_id = #{departmentId} and admin.id = #{hospitalAdminId} and leave_date between #{startDate} and #{endDate} and approval_status = 0
+    </select>
+    <select id="getLeaveApplicationsAllByDoctorId" resultType="com.example.entity.LeaveApplication">
+        select *
+        from `cq-hospital`.leave_application
+                 join `cq-hospital`.admin on admin.hospital_id = leave_application.hospital_id
+                 join `cq-hospital`.hospital on admin.hospital_id = hospital.id
+                 join `cq-hospital`.doctor on leave_application.doctor_id = doctor.id
+                 join `cq-hospital`.department on doctor.department_id = department.id
+        where leave_application.doctor_id = #{doctorId} and leave_date between #{startDate} and #{endDate}
+    </select>
+</mapper>

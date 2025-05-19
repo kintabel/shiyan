@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.DoctorMapper">
+
+    <sql id="Base_Column_List">
+        id, name, department_id,phone, gender, hospital_id, status, user_id,introduction
+    </sql>
+    <update id="informationAdd">
+        UPDATE `cq-hospital`.information
+        join `cq-hospital`.hospitalization h on information.id = h.information_id
+        SET disease = #{disease},
+            surgery = #{surgery}
+        where h.id = #{hospitalizationId}
+    </update>
+    <update id="updateInformation">
+        UPDATE `cq-hospital`.information i
+            JOIN `cq-hospital`.report r ON i.id = r.information_id
+        SET
+            i.out_report_id = #{outReportId},
+            i.discharge_orders = #{dischargeOrders},
+            i.discharge_time = #{formattedDateTime}
+        WHERE
+            r.id = #{outReportId}
+    </update>
+    <select id="selectAppointments" resultType="com.example.entity.RegistrationDetail">
+        SELECT
+            r.`order`,
+            h.`name` AS hospitalName,
+            dpt.`name` AS departmentName,
+            doc.`name` AS doctorName,
+            r.order_time,
+            r.register_time,
+            r.price,
+            u.`name` AS userName,
+            u.phone AS userPhone,
+            u.gender AS userGender,
+            r.status
+        FROM
+            `cq-hospital`.register r
+                JOIN
+            `cq-hospital`.hospital h ON r.hospital_id = h.id
+                JOIN
+            `cq-hospital`.department dpt ON r.department_id = dpt.id
+                JOIN
+            `cq-hospital`.doctor doc ON r.doctor_id = doc.id
+                JOIN
+            `cq-hospital`.user u ON r.user_id = u.id
+        WHERE
+            r.`doctor_id` = #{id}
+          AND DATE(r.register_time) = #{date}
+        AND r.status != 4;
+    </select>
+    <select id="getConsultationRecords" resultType="com.example.entity.Consultation">
+        SELECT
+            c.id,
+            c.`doctor_id`,
+            c.`user_id`,
+            c.`register_id`,
+            c.consultation_date,
+            c.content
+            FROM
+            `cq-hospital`.user u
+                JOIN
+            `cq-hospital`.consultation c ON u.id = c.user_id
+        WHERE
+            u.name = #{userName}
+    </select>
+    <select id="selectPrescribe" resultType="com.example.DTO.PrescribeDetailDTO">
+        SELECT DISTINCT
+            r.`order`,
+            h.`name` AS hospitalName,
+            dpt.`name` AS departmentName,
+            doc.`name` AS doctorName,
+            p.date,
+            m.number * s.price AS price ,
+            p.id AS pmId,
+            u.`name` AS userName,
+            u.phone AS userPhone,
+            u.gender AS userGender,
+            r.status,
+            m.medication AS medicines,
+            m.number,
+            m.content
+        FROM
+            `cq-hospital`.register r
+                JOIN
+            `cq-hospital`.hospital h ON r.hospital_id = h.id
+                JOIN
+            `cq-hospital`.department dpt ON r.department_id = dpt.id
+                JOIN
+            `cq-hospital`.doctor doc ON r.doctor_id = doc.id
+                JOIN
+            `cq-hospital`.user u ON r.user_id = u.id
+                JOIN
+            `cq-hospital`.prescribe_medications p ON p.`order` = r.`order`
+                JOIN
+            `cq-hospital`.medication_mid m ON m.pm_id = p.id
+                JOIN
+            `cq-hospital`.stock s ON s.name = m.medication
+        WHERE
+            r.`doctor_id` = #{id}  AND r.`order` = #{order}
+          AND (r.status = 2 OR r.status = 3);
+    </select>
+    <select id="selectRegisterByDocId" resultType="com.example.DTO.PrescribeUserDTO">
+        SELECT
+            u.name AS userName,
+            u.gender AS userGender,
+            u.phone AS userPhone,
+            p.date,
+            r.`order`
+        FROM
+            `cq-hospital`.prescribe_medications p
+                JOIN
+            `cq-hospital`.register r ON p.`order` = r.`order` AND p.patient_id = r.user_id
+                JOIN
+            `cq-hospital`.user u ON u.id = r.user_id
+        WHERE p.doctor_id = #{id} AND r.status = 2 OR r.status = 3;
+    </select>
+    <select id="selectHospitalizationById" resultType="com.example.entity.Hospitalization">
+        select
+            hospitalization.id,
+            u.name as userName,
+            doc.name as doctorName,
+            d.name as departmentName,
+            h.name as hospitalName
+        from `cq-hospital`.hospitalization
+                 join `cq-hospital`.department d on d.id = hospitalization.department_id
+                 join `cq-hospital`.doctor doc on doc.id = hospitalization.doctor_id
+                 join `cq-hospital`.user u on u.id = hospitalization.user_id
+                 join `cq-hospital`.hospital h on h.id = hospitalization.hospital_id
+        where `cq-hospital`.hospitalization.doctor_id = #{id}
+    </select>
+    <select id="selectDocByHidAndDepId" resultType="com.example.entity.Doctor">
+        SELECT
+            d.*,
+            p.performance,
+            ROUND(d.salary * IFNULL(p.performance, 1), 2) AS finalSalary,
+            IFNULL(e.evaluationCount, 0) AS evaluationCount,
+            IFNULL(e.avgEvaluation, 0) AS evaluation
+        FROM
+            `cq-hospital`.doctor d
+                LEFT JOIN
+            `cq-hospital`.performance p ON d.id = p.doctor_id
+                AND p.`year_month` = DATE_FORMAT(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH), '%Y-%m')
+                LEFT JOIN (
+                SELECT
+                    doctor_id,
+                    COUNT(*) AS evaluationCount,
+                    AVG(evaluated_object_type) AS avgEvaluation  -- 直接使用数值型评价分数
+                FROM
+                    `cq-hospital`.evaluation
+                GROUP BY
+                    doctor_id
+            ) e ON d.id = e.doctor_id
+        WHERE
+            d.hospital_id = #{hid}
+          AND d.department_id = #{depId}
+    </select>
+    <select id="selectWaitingQueues" resultType="com.example.DTO.WaitingQueuesDTO">
+        SELECT
+            r.id,
+            r.order AS orderNumber,
+            CONCAT(SUBSTRING(u.name, 1, 1), '**') AS nameHidden,
+            r.register_time AS registerTime,
+            ROW_NUMBER() OVER (ORDER BY r.register_time, r.order_time) AS queueNumber
+        FROM
+            `cq-hospital`.register r
+                JOIN `cq-hospital`.user u ON r.user_id = u.id
+        WHERE
+            r.doctor_id = #{doctorId}
+          AND r.register_time = #{registerTime}
+          AND DATE(r.order_time) = #{date}
+    </select>
+
+    <select id="selectQueueLength" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM `cq-hospital`.register r
+        WHERE r.doctor_id = #{doctorId}
+          AND DATE(r.order_time) = #{date}
+          AND r.status = 'waiting'
+    </select>
+
+</mapper>

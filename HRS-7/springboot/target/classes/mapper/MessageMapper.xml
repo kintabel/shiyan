@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.mapper.MessageMapper">
+
+    <resultMap id="messageResultMap" type="com.example.entity.Message">
+        <id property="id" column="id"/>
+        <result property="content" column="content"/>
+        <result property="senderType" column="sender_type"/>
+        <result property="senderId" column="sender_id"/>
+        <result property="receiverId" column="receiver_id"/>
+        <result property="timestamp" column="timestamp"/>
+    </resultMap>
+
+    <insert id="insertMessage" parameterType="com.example.entity.Message"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `cq-hospital`.message (content, sender_type, sender_id, receiver_id, timestamp)
+        VALUES (#{content}, #{senderType}, #{senderId}, #{receiverId}, #{timestamp})
+    </insert>
+
+    <select id="selectConversation" resultMap="messageResultMap">
+        SELECT * FROM `cq-hospital`.message
+        WHERE (sender_id = #{user1Id} AND receiver_id = #{user2Id})
+           OR (sender_id = #{user2Id} AND receiver_id = #{user1Id})
+        ORDER BY timestamp ASC
+    </select>
+    <select id="selectPatients" resultType="com.example.entity.User">
+        select distinct
+            user.* from `cq-hospital`.user
+                            join `cq-hospital`.message on user.id = message.sender_id
+                            join `cq-hospital`.doctor d on d.user_id = message.receiver_id
+        where d.user_id = #{doctorId}
+    </select>
+
+
+</mapper>
